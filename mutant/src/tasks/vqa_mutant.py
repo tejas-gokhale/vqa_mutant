@@ -26,6 +26,7 @@ import gc
 
 DataTuple = collections.namedtuple("DataTuple", 'dataset loader evaluator')
 
+VQA_DATA_ROOT = '/data/datasets/vqa_mutant/data/vqa/'
 
 def get_data_tuple(splits: str, bs:int, shuffle=False, drop_last=False, folder="/",nops=None) -> DataTuple:
     dset = VQADataset(splits,folder,nops=nops)
@@ -100,7 +101,7 @@ class VQA:
     def train(self, train_tuple, eval_tuple):
         dset, loader, evaluator = train_tuple
         iter_wrapper = (lambda x: tqdm(x, total=len(loader),ascii=True)) if args.tqdm else (lambda x: x)
-
+        # iter_wrapper = (lambda x: x)
         best_valid = 0.
         for epoch in range(args.epochs):
             quesid2ans = {}
@@ -210,7 +211,7 @@ if __name__ == "__main__":
         if 'test' in args.test:
             test_tuple = get_data_tuple(args.test, bs=950,
                                    shuffle=False, drop_last=False,folder=args.data)
-            quesid2ans = vqa.predict(test_tuple,dump=os.path.join('data/vqa/'+args.data, 'test_predict.json'))
+            quesid2ans = vqa.predict(test_tuple,dump=os.path.join(VQA_DATA_ROOT, args.data, 'test_predict.json'))
             if "vqacpv2" in args.data or "mutant" in args.data:
                 result = test_tuple.evaluator.evaluate(quesid2ans)
                 print("Current Result:"+str(result))
@@ -237,7 +238,7 @@ if __name__ == "__main__":
             result = vqa.evaluate(
             get_data_tuple('minival', bs=950,
                                    shuffle=False, drop_last=False,folder=args.data,nops=args.nops),
-                    dump=os.path.join('data/vqa/'+args.data, 'minival_predict.json')
+                    dump=os.path.join(VQA_DATA_ROOT+args.data, 'minival_predict.json')
             )
             print("Current Result:"+str(result))
             print("\n\n\n\n\n")
@@ -245,7 +246,7 @@ if __name__ == "__main__":
             vqa.predict(
                     get_data_tuple("minival", bs=950,
                                    shuffle=False, drop_last=False,folder=args.data,nops=args.nops),
-                    dump=os.path.join('data/vqa/'+args.data, 'lxmert_val_predict.json')
+                    dump=os.path.join(VQA_DATA_ROOT+args.data, 'lxmert_val_predict.json')
             )
         else:
             assert False, "No such test option for %s" % args.test
@@ -276,5 +277,3 @@ if __name__ == "__main__":
         msg["Subject"] = "Job has ended."
         p = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
         p.communicate(msg.as_bytes())
-
-    

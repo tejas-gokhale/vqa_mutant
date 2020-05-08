@@ -4,6 +4,7 @@
 import json
 import pickle
 import sys
+import os 
 
 import numpy as np
 import torch
@@ -20,8 +21,9 @@ TINY_IMG_NUM = 100
 FAST_IMG_NUM = 100
 
 # The path to data and image features.
-VQA_DATA_ROOT = 'data/vqa/'
-MSCOCO_IMGFEAT_ROOT = 'data/mscoco_imgfeat/'
+DATA_ROOT = '/data/datasets/vqa_mutant/data/'
+VQA_DATA_ROOT = '/data/datasets/vqa_mutant/data/vqa/'
+MSCOCO_IMGFEAT_ROOT = '/data/datasets/vqa_mutant/data/mscoco_imgfeat/'
 
 
 class VQADataset:
@@ -45,7 +47,13 @@ class VQADataset:
         # Loading datasets
         self.data = []
         for split in tqdm(self.splits,ascii=True,desc="Loading splits"):
-            self.data.extend(json.load(open("data/vqa/%s/%s.json"%(folder,split))))
+            # self.data.extend(json.load(open("data/vqa/%s/%s.json"%(folder,split))))
+            self.data.extend(
+                json.load(
+                    open(
+                        os.path.join(
+                            VQA_DATA_ROOT, folder, split+'.json'))))
+
         print("Data folder:%s"%folder,flush=True)
         print("Loading from %d data from split(s) %s."%(len(self.data), self.name),flush=True)
         
@@ -67,16 +75,16 @@ class VQADataset:
 
         # Answers
         if "vqacp" in folder:
-            self.ans2label = json.load(open("data/vqa/vqacpv2/trainval_ans2label.json"))
-            self.label2ans = json.load(open("data/vqa/vqacpv2/trainval_label2ans.json"))
+            self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_ans2label.json")))
+            self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_label2ans.json")))
             # self.ans2label = json.load(open("data/vqa/mutant/trainval_ans2label.json"))
             # self.label2ans = json.load(open("data/vqa/mutant/trainval_label2ans.json"))
         elif "mutant" in folder:
-            self.ans2label = json.load(open("data/vqa/mutant/trainval_ans2label.json"))
-            self.label2ans = json.load(open("data/vqa/mutant/trainval_label2ans.json"))
+            self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_ans2label.json")))
+            self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_label2ans.json")))
         else:
-            self.ans2label = json.load(open("data/vqa/trainval_ans2label.json"))
-            self.label2ans = json.load(open("data/vqa/trainval_label2ans.json"))
+            self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqa/trainval_ans2label.json")))
+            self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqa/trainval_label2ans.json")))
         assert len(self.ans2label) == len(self.label2ans)
 
     @property
@@ -112,16 +120,16 @@ class VQATorchDataset(Dataset):
         if 'train' in dataset.splits:
             print("TRAIN")
 
-            img_data.extend(load_obj_tsv('data/mutant_imgfeat/train_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mutant_imgfeat/valid_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/train_obj36.tsv'), topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/valid_obj36.tsv'), topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/train2014_obj36.tsv'), topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/val2014_obj36.tsv'), topk=topk))
 
         if 'valid' in dataset.splits:
             print("VALID")
 
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mutant_imgfeat/valid_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/train2014_obj36.tsv'), topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/val2014_obj36.tsv'), topk=topk))
 
         if 'minival' in dataset.splits:
             print("MINIVAL")
@@ -131,9 +139,9 @@ class VQATorchDataset(Dataset):
             # It is saved as the top 5K features in val2014_obj36.tsv
 #             if topk is None:
 #                 topk = 50000
-            img_data.extend(load_obj_tsv('data/mutant_imgfeat/valid_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/valid_obj36.tsv'), topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/train2014_obj36.tsv'), topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/val2014_obj36.tsv'), topk=topk))
             
             
 #             img_data.extend(load_obj_tsv('/scratch/tgokhale/mutant_notcrowd/valid_obj36.tsv', topk=100))
@@ -144,7 +152,7 @@ class VQATorchDataset(Dataset):
             
         if 'test' in dataset.name:      # If dataset contains any test split
             print("TEST")
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/test2015_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/test2015_obj36.tsv'), topk=topk))
 
         # Convert img list to dict
         self.imgid2img = {}
