@@ -12,7 +12,7 @@ from tqdm import tqdm
 from param import args
 from pretrain.qa_answer_table import load_lxmert_qa
 from tasks.vqa_model_lol import VQAModel
-from tasks.vqa_data_lol import VQADataset, VQATorchDataset, VQAEvaluator
+from tasks.vqa_data_mutant_type import VQADataset, VQATorchDataset, VQAEvaluator
 
 from email.mime.text import MIMEText
 from subprocess import Popen, PIPE
@@ -52,7 +52,7 @@ class VQA:
         
         # Model
 #         self.model = VQAModel(self.train_tuple.dataset.num_answers)
-        self.model = VQAModel(16119,fn_type=args.fn_type)
+        self.model = VQAModel(len(self.train_tuple.dataset.label2ans),fn_type=args.fn_type)
 
         # Load pre-trained weights
         if args.load_lxmert is not None:
@@ -67,6 +67,9 @@ class VQA:
             
         # Load IndexList of Answer to Type Map
         self.indexlist = json.load(open("data/vqa/mutant_indexlist.json"))
+
+        print("Length of Masks",len(self.indexlist),flush=True)
+
         indextensor = torch.cuda.LongTensor(self.indexlist)
         self.mask0 = torch.eq(indextensor,0).float()
         self.mask1 = torch.eq(indextensor,1).float()

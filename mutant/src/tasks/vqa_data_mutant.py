@@ -74,14 +74,15 @@ class VQADataset:
         }
 
         # Answers
-        if "vqacp" in folder:
-            self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_ans2label.json")))
-            self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_label2ans.json")))
-            # self.ans2label = json.load(open("data/vqa/mutant/trainval_ans2label.json"))
-            # self.label2ans = json.load(open("data/vqa/mutant/trainval_label2ans.json"))
-        elif "mutant" in folder:
-            self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_ans2label.json")))
-            self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_label2ans.json")))
+        if "vqacp" or "mutant" in folder:
+            if "vqacp" in folder:
+                self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_ans2label.json")))
+                self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_label2ans.json")))
+                # self.ans2label = json.load(open("data/vqa/mutant/trainval_ans2label.json"))
+                # self.label2ans = json.load(open("data/vqa/mutant/trainval_label2ans.json"))
+            if "mutant" in folder:
+                self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_ans2label.json")))
+                self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_label2ans.json")))
         else:
             self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqa/trainval_ans2label.json")))
             self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqa/trainval_label2ans.json")))
