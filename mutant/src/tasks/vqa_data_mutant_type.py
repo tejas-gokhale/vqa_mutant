@@ -15,7 +15,7 @@ from tqdm import tqdm
 # Load part of the dataset for fast checking.
 # Notice that here is the number of images instead of the number of data,
 # which means all related data to the images would be used.
-TINY_IMG_NUM = 512
+TINY_IMG_NUM = 1024
 FAST_IMG_NUM = 5000
 
 # The path to data and image features.
@@ -228,6 +228,10 @@ class VQATorchDataset(Dataset):
 class VQAEvaluator:
     def __init__(self, dataset: VQADataset):
         self.dataset = dataset
+        self.color_qtypes = ['what color is the', 'what color are the', 
+					 'what color', 'what color is',
+					 'what is the color of the']
+
 
     def evaluate(self, quesid2ans: dict):
         score = 0.
@@ -237,6 +241,9 @@ class VQAEvaluator:
         for quesid, ans in quesid2ans.items():
             datum = self.dataset.data[quesid]
             atype = datum["answer_type"]
+            qtypekey=datum['question_type']
+            if qtypekey in self.color_qtypes:
+                atype="color"
             label = datum['label']
             acounts[atype] = acounts.get(atype,0)+1
             

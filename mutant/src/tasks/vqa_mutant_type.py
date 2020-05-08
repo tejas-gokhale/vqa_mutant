@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from param import args
 from pretrain.qa_answer_table import load_lxmert_qa
-from tasks.vqa_model_lol import VQAModel
+from tasks.vqa_model_muttype import VQAModel
 from tasks.vqa_data_mutant_type import VQADataset, VQATorchDataset, VQAEvaluator
 
 from email.mime.text import MIMEText
@@ -110,7 +110,11 @@ class VQA:
         dset, loader, evaluator = train_tuple
         iter_wrapper = (lambda x: tqdm(x, total=len(loader),ascii=True)) if args.tqdm else (lambda x: x)
 
+        total_steps = len(loader)
+        eval_every =  int(0.2 * total_steps)
+
         best_valid = 0.
+        best_i = 0
         for epoch in range(args.epochs):
             quesid2ans = {}
             for i, (ques_id, feats, boxes, sent, typetarget, target) in iter_wrapper(enumerate(loader)):
@@ -145,22 +149,24 @@ class VQA:
                     ans = dset.label2ans[l]
                     quesid2ans[qid.item()] = ans
 
-            log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(quesid2ans) * 100.)
+                if ((i+1)%eval_every == 0) and self.valid_tuple is not None:
+                    log_str = "\nEpoch %d, Step %d: Train %0.2f\n" % (epoch,i, evaluator.evaluate(quesid2ans) * 100.)
 
-            if self.valid_tuple is not None:  # Do Validation
-                valid_score = self.evaluate(eval_tuple)
-                if valid_score > best_valid:
-                    best_valid = valid_score
-                    self.save("BEST")
+                    if self.valid_tuple is not None:  # Do Validation
+                        valid_score = self.evaluate(eval_tuple)
+                        if valid_score > best_valid:
+                            best_valid = valid_score
+                            best_i = i
+                            self.save("BEST")
 
-                log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
-                           "Epoch %d: Best %0.2f\n" % (epoch, best_valid * 100.)
+                        log_str += "Epoch %d, Step %d: Valid %0.2f\n" % (epoch,i, valid_score * 100.) + \
+                                "Epoch %d, Best Step %d: Best %0.2f\n" % (epoch,best_i, best_valid * 100.)
 
-            print(log_str, end='')
+                    print(log_str, end='')
 
-            with open(self.output + "/log.log", 'a') as f:
-                f.write(log_str)
-                f.flush()
+                    with open(self.output + "/log.log", 'a') as f:
+                        f.write(log_str)
+                        f.flush()
 
         self.save("LAST")
         return best_valid
@@ -181,10 +187,11 @@ class VQA:
     def calculatelogits(self,anspreds,typepreds,mode):
             batch = anspreds.size()[0]
             mask0,mask1,mask2,mask3 = self.get_masks(mode,batch)
-            anspreds0 = anspreds*mask0*typepreds.select(dim=1,index=0).reshape([batch,1]).repeat([1,16119])
-            anspreds1 = anspreds*mask1*typepreds.select(dim=1,index=1).reshape([batch,1]).repeat([1,16119])
-            anspreds2 = anspreds*mask2*typepreds.select(dim=1,index=2).reshape([batch,1]).repeat([1,16119])
-            anspreds3 = anspreds*mask3*typepreds.select(dim=1,index=2).reshape([batch,1]).repeat([1,16119])
+            replen = len(self.train_tuple.dataset.label2ans)
+            anspreds0 = anspreds*mask0*typepreds.select(dim=1,index=0).reshape([batch,1]).repeat([1,replen])
+            anspreds1 = anspreds*mask1*typepreds.select(dim=1,index=1).reshape([batch,1]).repeat([1,replen])
+            anspreds2 = anspreds*mask2*typepreds.select(dim=1,index=2).reshape([batch,1]).repeat([1,replen])
+            anspreds3 = anspreds*mask3*typepreds.select(dim=1,index=2).reshape([batch,1]).repeat([1,replen])
             nanspreds=anspreds0+anspreds1+anspreds2+anspreds3
             return nanspreds
     
@@ -246,7 +253,7 @@ class VQA:
 
     def save(self, name):
         model_to_save = self.model.module if hasattr(self.model, "module") else self.model
-        torch.save(smodel_to_save.state_dict(),
+        torch.save(model_to_save.state_dict(),
                    os.path.join(self.output, "%s.pth" % name))
 
     def load(self, path):
