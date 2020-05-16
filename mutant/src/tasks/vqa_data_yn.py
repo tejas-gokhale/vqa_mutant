@@ -127,6 +127,7 @@ class VQATorchDataset(Dataset):
         for datum in tqdm(self.raw_dataset.data,ascii=True,desc="Loading Image features"):
             if datum['img_id'] in self.imgid2img:
                 self.data.append(datum)
+        self.raw_dataset.data=self.data
         print("Use %d data in torch dataset" % (len(self.data)),flush=True)
         print(flush=True)
 

@@ -156,7 +156,8 @@ class VQATorchDataset(Dataset):
                 self.data.append(datum)
                 valid_imgs.append(datum['img_id'])
                 # orig and mutant
-        
+        self.raw_dataset.data=self.data
+
         # Only keep images with loaded data 
         valid_imgs = set(valid_imgs)
         all_imgs = set(self.imgid2img)

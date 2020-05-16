@@ -144,6 +144,7 @@ class VQATorchDataset(Dataset):
             if datum['img_id'] in self.imgid2img:
                 self.data.append(datum)
                 valid_imgs.append(datum['img_id'])
+        self.raw_dataset.data=self.data
         
         # Only keep images with loaded data 
         valid_imgs = set(valid_imgs)
