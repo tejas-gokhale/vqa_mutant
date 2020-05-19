@@ -31,7 +31,7 @@ class VQAModel(nn.Module):
         )
         self.logit_fc.apply(self.lxrt_encoder.model.init_bert_weights)
 
-    def forward(self, feat, pos, sent):
+    def forward(self, feat, pos, sent, ret_hid=False):
         """
         b -- batch_size, o -- object_number, f -- visual_feature_size
 
@@ -44,6 +44,9 @@ class VQAModel(nn.Module):
         x = self.lxrt_encoder(sent, (feat, pos))
         logit = self.logit_fc(x)
 
-        return logit
+        if not ret_hid:
+            return logit
+        else:
+            return x,logit
 
 

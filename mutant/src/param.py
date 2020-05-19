@@ -92,7 +92,7 @@ def parse_args():
     
     parser.add_argument("--fn_type", default="softmax")
     parser.add_argument("--dump",default=False,action='store_const', const=True)
-    
+    parser.add_argument("--mutant",default=False,action='store_const', const=True)
     parser.add_argument("--nops", dest='nops', default=1)
 
     # Parse the arguments.

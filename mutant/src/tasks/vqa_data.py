@@ -44,7 +44,7 @@ class VQADataset:
         # Loading datasets
         self.data = []
         for split in tqdm(self.splits,ascii=True,desc="Loading splits"):
-            self.data.extend(json.load(open("data/vqa/%s/%s.json"%(folder,split))))
+            self.data.extend(json.load(open("/data/datasets/vqa_mutant/data/vqa/%s/%s.json"%(folder,split))))
         print("Data folder:%s"%folder,flush=True)
         print("Loading from %d data from split(s) %s."%(len(self.data), self.name),flush=True)
         
@@ -65,12 +65,8 @@ class VQADataset:
         }
 
         # Answers
-        if "vqacpv2" in folder:
-            self.ans2label = json.load(open("data/vqa/vqacpv2/trainval_ans2label.json"))
-            self.label2ans = json.load(open("data/vqa/vqacpv2/trainval_label2ans.json"))
-        else:
-            self.ans2label = json.load(open("data/vqa/trainval_ans2label.json"))
-            self.label2ans = json.load(open("data/vqa/trainval_label2ans.json"))
+        self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_ans2label.json"))
+        self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_label2ans.json"))
         assert len(self.ans2label) == len(self.label2ans)
 
     @property
@@ -102,11 +98,11 @@ class VQATorchDataset(Dataset):
         # Loading detection features to img_data
         img_data = []
         if 'train' in dataset.splits:
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
 
         if 'valid' in dataset.splits:
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
 #             img_data.extend(load_obj_tsv('/scratch/tgokhale/mutant_number/valid_obj36.tsv', topk=topk))
             
         if 'minival' in dataset.splits:
@@ -115,8 +111,8 @@ class VQATorchDataset(Dataset):
             # It is saved as the top 5K features in val2014_obj36.tsv
 #             if topk is None:
 #                 topk = 50000
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
 #             img_data.extend(load_obj_tsv('/scratch/tgokhale/mutant_notcrowd/valid_obj36.tsv', topk=100))
 
         if 'nominival' in dataset.splits:
@@ -126,8 +122,8 @@ class VQATorchDataset(Dataset):
 
             
         if 'test' in dataset.name:      # If dataset contains any test split
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
-            img_data.extend(load_obj_tsv('data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
 #             img_data.extend(load_obj_tsv('data/mscoco_imgfeat/test2015_obj36.tsv', topk=topk))
 
         # Convert img list to dict
@@ -179,6 +175,10 @@ class VQATorchDataset(Dataset):
         np.testing.assert_array_less(boxes, 1+1e-5)
         np.testing.assert_array_less(-boxes, 0+1e-5)
 
+        bias = 0
+        if "bias" in datum:
+            bias = datum["bias"]
+
         # Provide label (target)
         if 'label' in datum:
             label = datum['label']
@@ -189,9 +189,15 @@ class VQATorchDataset(Dataset):
                 if ans not in self.raw_dataset.ans2label:
                     continue
                 target[self.raw_dataset.ans2label[ans]] = score
-            return ques_id, feats, boxes, ques, target
+            if "bias" in datum:
+                return ques_id, feats, boxes, ques, target, bias
+            else:
+                return ques_id, feats, boxes, ques, target
         else:
-            return ques_id, feats, boxes, ques
+            if "bias" in datum:
+                return ques_id, feats, boxes, ques, 0, bias
+            else:
+                return ques_id, feats, boxes, ques, 0
 
 
 class VQAEvaluator:
@@ -214,7 +220,7 @@ class VQAEvaluator:
                 atype_map[atype] = atype_map.get(atype,0.) + label[ans]
                 
         for k,v in acounts.items():
-            print(f"AnswerType Split:{k}:{atype_map[k]/v}",flush=True)
+            print(f"AnswerType Split:{k}:{atype_map.get(k,0)/v}",flush=True)
 
         return score / len(quesid2ans)
 

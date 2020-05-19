@@ -44,7 +44,7 @@ class VQA:
             )
             if args.valid != "":
                 self.valid_tuple = get_data_tuple(
-                    args.valid, bs=128,
+                    args.valid, bs=512,
                     shuffle=False, drop_last=False, folder=folder
                 )
             else:
@@ -66,7 +66,7 @@ class VQA:
             self.model.lxrt_encoder.multi_gpu()
             
         # Load IndexList of Answer to Type Map
-        self.indexlist = json.load(open("data/vqa/mutant_indexlist.json"))
+        self.indexlist = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_indexlist.json"))
 
         print("Length of Masks",len(self.indexlist),flush=True)
 
@@ -191,7 +191,7 @@ class VQA:
             anspreds0 = anspreds*mask0*typepreds.select(dim=1,index=0).reshape([batch,1]).repeat([1,replen])
             anspreds1 = anspreds*mask1*typepreds.select(dim=1,index=1).reshape([batch,1]).repeat([1,replen])
             anspreds2 = anspreds*mask2*typepreds.select(dim=1,index=2).reshape([batch,1]).repeat([1,replen])
-            anspreds3 = anspreds*mask3*typepreds.select(dim=1,index=2).reshape([batch,1]).repeat([1,replen])
+            anspreds3 = anspreds*mask3*typepreds.select(dim=1,index=3).reshape([batch,1]).repeat([1,replen])
             nanspreds=anspreds0+anspreds1+anspreds2+anspreds3
             return nanspreds
     

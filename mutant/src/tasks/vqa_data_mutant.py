@@ -75,14 +75,8 @@ class VQADataset:
 
         # Answers
         if "vqacp" or "mutant" in folder:
-            if "vqacp" in folder:
-                self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_ans2label.json")))
-                self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqacpv2/trainval_label2ans.json")))
-                # self.ans2label = json.load(open("data/vqa/mutant/trainval_ans2label.json"))
-                # self.label2ans = json.load(open("data/vqa/mutant/trainval_label2ans.json"))
-            if "mutant" in folder:
-                self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_ans2label.json")))
-                self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "mutant/trainval_label2ans.json")))
+            self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_ans2label.json"))
+            self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_label2ans.json"))
         else:
             self.ans2label = json.load(open(os.path.join(VQA_DATA_ROOT, "vqa/trainval_ans2label.json")))
             self.label2ans = json.load(open(os.path.join(VQA_DATA_ROOT, "vqa/trainval_label2ans.json")))
@@ -120,7 +114,6 @@ class VQATorchDataset(Dataset):
         img_data = []
         if 'train' in dataset.splits:
             print("TRAIN")
-
             img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/train_obj36.tsv'), topk=topk))
             img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/valid_obj36.tsv'), topk=topk))
             img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/train2014_obj36.tsv'), topk=topk))
@@ -140,7 +133,7 @@ class VQATorchDataset(Dataset):
             # It is saved as the top 5K features in val2014_obj36.tsv
 #             if topk is None:
 #                 topk = 50000
-            img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/valid_obj36.tsv'), topk=topk))
+            # img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mutant_imgfeat/valid_obj36.tsv'), topk=topk))
             img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/train2014_obj36.tsv'), topk=topk))
             img_data.extend(load_obj_tsv(os.path.join(DATA_ROOT, 'mscoco_imgfeat/val2014_obj36.tsv'), topk=topk))
             
@@ -208,17 +201,22 @@ class VQATorchDataset(Dataset):
         np.testing.assert_array_less(boxes, 1+1e-5)
         np.testing.assert_array_less(-boxes, 0+1e-5)
 
+        bias = 0
+        if "bias" in datum:
+            bias= datum["bias"]
+
         # Provide label (target)
         if 'label' in datum:
             label = datum['label']
             target = torch.zeros(self.raw_dataset.num_answers)
             for ans, score in label.items():
-#                 if "-"!=ans and ans[0]=="-" and int(ans)<0 :
-#                     ans='0'
                 if ans not in self.raw_dataset.ans2label:
                     continue
                 target[self.raw_dataset.ans2label[ans]] = score
-            return ques_id, feats, boxes, ques, target
+            if "bias" in datum:
+                return ques_id, feats, boxes, ques, target, bias
+            else:
+                return ques_id, feats, boxes, ques, target
         else:
             return ques_id, feats, boxes, ques
 

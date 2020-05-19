@@ -60,13 +60,8 @@ class VQADataset:
          # Answers
         if "vqacp" or "mutant" in folder:
             if "vqacp" in folder:
-                self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/vqacpv2/trainval_ans2label.json"))
-                self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/vqacpv2/trainval_label2ans.json"))
-                # self.ans2label = json.load(open("data/vqa/mutant/trainval_ans2label.json"))
-                # self.label2ans = json.load(open("data/vqa/mutant/trainval_label2ans.json"))
-            if "mutant" in folder:
-                self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant/trainval_ans2label.json"))
-                self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant/trainval_label2ans.json"))
+                self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_ans2label.json"))
+                self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_label2ans.json"))
         else:
             self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/trainval_ans2label.json"))
             self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/trainval_label2ans.json"))
@@ -209,12 +204,20 @@ class VQATorchDataset(Dataset):
             if qtypekey in self.color_qtypes:
                 typekey="color"
 
-            answertypefeats = answer_type_map["color"]
+            answertypefeats = answer_type_map[typekey]
 
+            all_labels = list(label.keys())
+            all_indx = []
             for ans, score in label.items():
                 if ans not in self.raw_dataset.ans2label:
+                    print(ans,flush=True)
                     continue
                 target[self.raw_dataset.ans2label[ans]] = score
+                all_indx.append(self.raw_dataset.ans2label[ans])
+
+            _, pl = target.max(1)
+            print(f"{self.raw_dataset.label2ans[pl]},{all_labels},{all_indx}")
+            assert self.raw_dataset.label2ans[pl] in all_labels
             
             for ix,score in enumerate(answertypefeats):
                 if score==1:
@@ -246,12 +249,13 @@ class VQAEvaluator:
                 atype="color"
             label = datum['label']
             acounts[atype] = acounts.get(atype,0)+1
-            
+            # print(ans,label,flush=True)
             if ans in label:
+                # print("Here")
                 score += label[ans]
                 atype_map[atype] = atype_map.get(atype,0.) + label[ans]
         
-        print(atype_map.keys())     
+        print(atype_map.keys(),flush=True)     
         for k,v in acounts.items():
             print(f"AnswerType Split:{k}:{atype_map.get(k,0)/v}:{v}",flush=True)
 
