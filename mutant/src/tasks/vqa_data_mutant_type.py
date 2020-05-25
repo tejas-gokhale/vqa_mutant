@@ -58,13 +58,8 @@ class VQADataset:
 
         # Answers
          # Answers
-        if "vqacp" or "mutant" in folder:
-            if "vqacp" in folder:
-                self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_ans2label.json"))
-                self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_label2ans.json"))
-        else:
-            self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/trainval_ans2label.json"))
-            self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/trainval_label2ans.json"))
+        self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_cp_merge_ans2label.json"))
+        self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_cp_merge_label2ans.json"))
         assert len(self.ans2label) == len(self.label2ans)
 
         print("Length of answerlabels",len(self.ans2label),flush=True)

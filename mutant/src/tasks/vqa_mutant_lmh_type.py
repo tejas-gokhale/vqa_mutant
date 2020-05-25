@@ -31,7 +31,7 @@ def get_data_tuple(splits: str, bs:int, shuffle=False, drop_last=False, folder="
     evaluator = VQAEvaluator(dset)
     data_loader = DataLoader(
         tset, batch_size=bs,
-        shuffle=shuffle, num_workers=args.num_workers,
+        shuffle=shuffle, num_workers=0,
         drop_last=drop_last, pin_memory=True
     )
 
@@ -85,7 +85,7 @@ class VQA:
             )
             if args.valid != "":
                 self.valid_tuple = get_data_tuple(
-                    args.valid, bs=512,
+                    args.valid, bs=64,
                     shuffle=False, drop_last=False, folder=folder
                 )
             else:
@@ -115,7 +115,7 @@ class VQA:
             self.model.lxrt_encoder.multi_gpu()
             
         # Load IndexList of Answer to Type Map
-        self.indexlist = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_indexlist.json"))
+        self.indexlist = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_merge_indexlist.json"))
 
         print("Length of Masks",len(self.indexlist),flush=True)
 
@@ -299,12 +299,12 @@ class VQA:
             _, label = target.max(1)
             for qid, l in zip(ques_id, label.cpu().numpy()):
                 ans = dset.label2ans[l]
-                print(l,ans)
-                assert dset.ans2label[ans] == l
+                # print(l,ans)
+                # assert dset.ans2label[ans] == l
                 quesid2ans[qid.item()] = ans
         eval_result = evaluator.evaluate(quesid2ans)
-        print(f"{eval_result}", flush =True)
-        sys.exit(1)
+        # print(f"{eval_result}", flush =True)
+        # sys.exit(1)
         return eval_result
 
     def save(self, name):

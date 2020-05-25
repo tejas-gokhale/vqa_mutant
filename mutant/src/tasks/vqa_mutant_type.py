@@ -66,7 +66,7 @@ class VQA:
             self.model.lxrt_encoder.multi_gpu()
             
         # Load IndexList of Answer to Type Map
-        self.indexlist = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_indexlist.json"))
+        self.indexlist = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_merge_indexlist.json"))
 
         print("Length of Masks",len(self.indexlist),flush=True)
 
