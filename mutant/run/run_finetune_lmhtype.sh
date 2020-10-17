@@ -24,8 +24,8 @@ CUDA_VISIBLE_DEVICES=$1 PYTHONPATH=$PYTHONPATH:./src \
     nohup python -u src/tasks/vqa_mutant_lmh_type.py \
     --train train --valid minival  \
     --llayers 9 --xlayers 5 --rlayers 5 \
-    --loadLXMERT snap/pretrained/model \
+    --loadLXMERT snap/vqa/lmh_type_cp/BEST \
     --data $data \
-    --batchSize 64 --optim bert --lr 1e-5 --epochs 15 \
+    --batchSize 32 --optim bert --lr 1e-5 --epochs 5 \
     --tqdm --output $output ${@:4} > outputs/$name.lmhtype.out &
 

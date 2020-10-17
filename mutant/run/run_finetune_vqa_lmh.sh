@@ -26,6 +26,6 @@ CUDA_VISIBLE_DEVICES=$1 PYTHONPATH=$PYTHONPATH:./src \
     --llayers 9 --xlayers 5 --rlayers 5 \
     --loadLXMERT snap/pretrained/model \
     --data $data \
-    --batchSize 128 --optim bert --lr 1e-5 --epochs 15 \
+    --batchSize 32 --optim bert --lr 1e-5 --epochs 15 \
     --tqdm --output $output ${@:4} > outputs/$name.orig_lmh.out &
 

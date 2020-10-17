@@ -137,7 +137,11 @@ class VQA:
         dset, loader, evaluator = train_tuple
         iter_wrapper = (lambda x: tqdm(x, total=len(loader),ascii=True)) if args.tqdm else (lambda x: x)
 
+        total_steps = len(loader)
+        eval_every =  int(0.2 * total_steps)
+
         best_valid = 0.
+        best_i = 0
         for epoch in range(args.epochs):
             quesid2ans = {}
             for i, (ques_id, feats, boxes, sent, target, bias) in iter_wrapper(enumerate(loader)):
@@ -163,22 +167,23 @@ class VQA:
                     ans = dset.label2ans[l]
                     quesid2ans[qid.item()] = ans
 
-            log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(quesid2ans) * 100.)
 
-            if self.valid_tuple is not None:  # Do Validation
-                valid_score = self.evaluate(eval_tuple)
-                if valid_score > best_valid:
-                    best_valid = valid_score
-                    self.save("BEST")
+                if ((i+1)%eval_every == 0) and  self.valid_tuple is not None:  # Do Validation
+                    log_str = "\nEpoch %d: Train %0.2f\n" % (epoch, evaluator.evaluate(quesid2ans) * 100.)
 
-                log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
-                           "Epoch %d: Best %0.2f\n" % (epoch, best_valid * 100.)
+                    valid_score = self.evaluate(eval_tuple)
+                    if valid_score > best_valid:
+                        best_valid = valid_score
+                        self.save("BEST")
 
-            print(log_str, end='')
+                    log_str += "Epoch %d: Valid %0.2f\n" % (epoch, valid_score * 100.) + \
+                            "Epoch %d: Best %0.2f\n" % (epoch, best_valid * 100.)
 
-            with open(self.output + "/log.log", 'a') as f:
-                f.write(log_str)
-                f.flush()
+                    print(log_str, end='')
+
+                    with open(self.output + "/log.log", 'a') as f:
+                        f.write(log_str)
+                        f.flush()
 
         self.save("LAST")
         return best_valid

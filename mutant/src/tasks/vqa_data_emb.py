@@ -68,8 +68,8 @@ class VQADataset:
 
         # Answers
         
-        self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_ans2label.json"))
-        self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_label2ans.json"))
+        self.ans2label = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_cp_merge_ans2label.json"))
+        self.label2ans = json.load(open("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/mutant_cp_merge_label2ans.json"))
         
 
 #             self.ans2label = json.load(open("data/vqa/trainval_ans2label.json"))
@@ -119,6 +119,7 @@ class VQATorchDataset(Dataset):
 #             if topk is None:
 #                 topk = 50000
             # img_data.extend(load_obj_tsv('data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
+            img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/train2014_obj36.tsv', topk=topk))
             img_data.extend(load_obj_tsv('/data/datasets/vqa_mutant/data/mscoco_imgfeat/val2014_obj36.tsv', topk=topk))
 #             img_data.extend(load_obj_tsv('/scratch/tgokhale/mutant_notcrowd/valid_obj36.tsv', topk=100))
 
@@ -157,7 +158,7 @@ class VQATorchDataset(Dataset):
         print("Use %d data in torch dataset" % (len(self.data)),flush=True)
         print(flush=True)
         
-        ans_embed = np.load("/home/pbanerj6/vqa_mutant/mutant/answer_embs.npy") +1e-8
+        ans_embed = np.load("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/answer_embs.npy") +1e-8
         ans_embed = torch.tensor(ans_embed)
         self.ans_embed = torch.nn.functional.normalize(ans_embed,dim=1)
         

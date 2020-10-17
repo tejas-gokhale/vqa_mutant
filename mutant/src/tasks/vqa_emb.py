@@ -79,7 +79,7 @@ class VQA:
         if args.multiGPU:
             self.model.lxrt_encoder.multi_gpu()
             
-        ans_embed = np.load("/home/pbanerj6/vqa_mutant/mutant/answer_embs.npy") + 1e-8
+        ans_embed = np.load("/data/datasets/vqa_mutant/data/vqa/mutant_l2a/answer_embs.npy") + 1e-8
         ans_embed = torch.tensor(ans_embed).cuda()
         self.ans_embed = torch.nn.functional.normalize(ans_embed,dim=1)
         self.embed_cache={}
@@ -131,9 +131,10 @@ class VQA:
                 all_ans_embs  = torch.stack([all_ans_embs]*gen_embs.shape[0])
                 gold_emb = self.model.emb_proj(gold_emb)
                 
-                cos = nn.CosineSimilarity()
+                cos = nn.CosineSimilarity(dim=1)
                 positive_dist = cos(gen_embs,gold_emb) # shape b,k;b,k-> b
                 gen_embs = torch.cat([gen_embs.unsqueeze(1)]*all_ans_embs.shape[1],dim=1)
+                cos = nn.CosineSimilarity(dim=2)
                 d_logit = cos(gen_embs,all_ans_embs)
                 
 #                 print(logit,positive_dist,flush=True)
