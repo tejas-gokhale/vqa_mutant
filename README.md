@@ -1,15 +1,15 @@
 # VQA-MUTANT 
 
 Code for **MUTANT: A Training Paradigm for Out-of-Distribution Generalization in Visual Question Answering**
+- _Tejas Gokhale, Pratyay Banerjee, Chitta Baral, Yezhou Yang_
+- EMNLP 2020 , https://arxiv.org/abs/2009.08566
 
-_Tejas Gokhale, Pratyay Banerjee, Chitta Baral, Yezhou Yang_
+In this paper, we use two backbone models: 
+1. LXMERT (Tan et al. EMNLP 2019), and 
+2. UpDn (Anderson et al. CVPR 2017).
+The instructions for running each can be found in respective folders. 
 
-EMNLP 2020 , https://arxiv.org/abs/2009.08566
-
-In this paper, we use two backbone models: LXMERT (Tan et al. EMNLP 2019) and UpDn (Anderson et al. CVPR 2017).
-The instructions for runnning each can be found in respective folders. 
-
-## For LXMERT, 
+## LXMERT
 `cd lxmert`
 
 ### Download data and pre-trained model
