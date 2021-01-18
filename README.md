@@ -14,10 +14,9 @@ The instructions for running each can be found in respective folders.
 
 ### Download data and pre-trained model
 (features and json files for mutant samples) 
-- download image features from: 
-- put them under `data/mutant_imgfeat/`
-- download the .json files from: 
-- Put the .json files under `data/vqa/`
+- download image features and .json files from: `https://drive.google.com/drive/folders/1QldD1BPDK8cojlrq2OhMeUYlmNo8RFGl?usp=sharing`
+- put image features under `data/mutant_imgfeat/`
+- put the .json files under `data/vqa/`
 - download pre-trained model from: 
 
 ### Command to test pre-trained model
