@@ -37,5 +37,5 @@ Each of these directories contains 'train2014' and 'val2014' according to the st
 The example below shows the filename convention we used
 ![example image](COCO_train2014_000000000025_number_giraffe_2.jpg)
 
-*filename*    COCO_train2014_000000000025_number_giraffe_2
-*convention*  original COCO filename_type-of-question_name-of-object-removed_number of object instances removed
+- *filename*    COCO_train2014_000000000025_number_giraffe_2
+- *convention*  original COCO filename_type-of-question_name-of-object-removed_number of object instances removed
