@@ -34,7 +34,9 @@ These can be found as 3 directories in the Google drive link: https://drive.goog
 - the 'images' dir contains the final mutated image
 
 Each of these directories contains 'train2014' and 'val2014' according to the standard VQA split.
-The example below shows the filename convention we used
+The example below shows the filename convention we used:
+
+
 ![example image](COCO_train2014_000000000025_number_giraffe_2.jpg)
 
 - *filename*    COCO_train2014_000000000025_number_giraffe_2
