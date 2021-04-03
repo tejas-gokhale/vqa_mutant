@@ -18,17 +18,6 @@ FAST_IMG_NUM = 5000
 
 ROOT_FOLDER = "/data/data/lxmert_data/"
 
-img_rcnn_prefix = {
-    "gqa" : "/data/data/lxmert_data/updnfeats/bottomup_feats_vg/",
-    "coco": "/data/data/lxmert_data/updnfeats/bottomup_feats/"
-}
-
-def get_rcnn_prefix(img):
-    if "COCO" in img:
-        return img_rcnn_prefix["coco"] + str(img)
-    else:
-        return img_rcnn_prefix["gqa"] + str(img)
-
 class GQADataset:
     """
     A GQA data example in json file:
@@ -93,17 +82,50 @@ class GQABufferLoader():
 gqa_buffer_loader = GQABufferLoader()
 
 
+import math
+
+def updnlabels(c1,c2,ix):
+    label = 0
+    if c1[ix]> c2[ix]:
+        label = 1
+    elif c1[ix]==c2[ix]:
+        label = 2
+    return label
+
+def normalize_cords(cords):
+    cords = np.array(cords)
+    for ix in range(0,3):
+        cords[:,ix] = (cords[:,ix]-cords[:,ix].min())/(cords[:,ix].max()-cords[:,ix].min())
+    return cords
+
+def create_spatial(cords):
+    cords = normalize_cords(cords)
+    pair_wise_xyz_diffs = []
+    pair_wise_xyz_labels =[]
+    for oix1,c1 in enumerate(cords):
+        for oix2,c2 in enumerate(cords):
+            dxyz =  [float(c1[0]-c2[0]),float(c1[1]-c2[1]),float(c1[2]-c2[2])]
+            pair_wise_xyz_diffs.append(dxyz)
+            x_label = updnlabels(c1,c2,0)
+            y_label = updnlabels(c1,c2,1)
+            z_label = updnlabels(c1,c2,2)
+#             if math.isnan(c1[0]) or math.isnan(c1[1]) or math.isnan(c1[2]):
+#                 return None
+#             if math.isnan(c2[0]) or math.isnan(c2[1]) or math.isnan(c2[2]):
+#                 return None
+            pair_wise_xyz_labels.append([x_label,y_label,z_label])
+    return pair_wise_xyz_diffs, pair_wise_xyz_labels
+
+
 """
 Example in obj tsv:
 FIELDNAMES = ["img_id", "img_h", "img_w", "objects_id", "objects_conf",
               "attrs_id", "attrs_conf", "num_boxes", "boxes", "features"]
 """
 class GQATorchDataset(Dataset):
-    def __init__(self, dataset: GQADataset, is_valid=False):
+    def __init__(self, dataset: GQADataset):
         super().__init__()
         self.raw_dataset = dataset
-        self.is_valid=is_valid
-        self.len = args.len
 
         if args.tiny:
             topk = TINY_IMG_NUM
@@ -115,29 +137,33 @@ class GQATorchDataset(Dataset):
         # Loading detection features to img_data
         # Since images in train and valid both come from Visual Genome,
         # buffer the image loading to save memory.
-#         img_data = []
-#         if 'testdev' in dataset.splits or 'testdev_all' in dataset.splits:     # Always loading all the data in testdev
-#             img_data.extend(gqa_buffer_loader.load_data('testdev', -1))
-#         else:
-#             img_data.extend(gqa_buffer_loader.load_data('train', topk))
-#         self.imgid2img = {}
-#         for img_datum in img_data:
-#             self.imgid2img[img_datum['img_id']] = img_datum
+        img_data = []
+        spatial_data = []
+        if 'testdev' in dataset.splits or 'testdev_all' in dataset.splits:     # Always loading all the data in testdev
+            img_data.extend(gqa_buffer_loader.load_data('testdev', -1))
+            spatial_data.extend(json.load(open(ROOT_FOLDER+"/gqa_depth/gqa_testdev_depth36.json")))
+        else:
+            img_data.extend(gqa_buffer_loader.load_data('train', topk))
+            spatial_data.extend(json.load(open(ROOT_FOLDER+"/gqa_depth/vg_gqa_depth36.json")))
+
+        self.imgid2img = {}
+        self.imgid2spa = {}
+        for img_datum in img_data:
+            self.imgid2img[img_datum['img_id']] = img_datum
+        
+        
+        for img_datum in spatial_data:
+            self.imgid2spa[img_datum['img_id']] = img_datum
 
         # Only kept the data with loaded image features
-#         self.data = []
-#         for datum in self.raw_dataset.data:
-#             if datum['img_id'] in self.imgid2img:
-#                 self.data.append(datum)
-        self.data = self.raw_dataset.data
+        self.data = []
+        for datum in self.raw_dataset.data:
+            if datum['img_id'] in self.imgid2img:
+                self.data.append(datum)
         print("Use %d data in torch dataset" % (len(self.data)))
         print()
 
     def __len__(self):
-#         return len(self.data)
-        if self.len!=1.0 and not self.is_valid:
-            return int(self.len*len(self.data))
-        
         return len(self.data)
 
     def __getitem__(self, item: int):
@@ -148,20 +174,11 @@ class GQATorchDataset(Dataset):
         ques = datum['sent']
 
         # Get image info
-#         img_info = self.imgid2img[img_id]
-
-        output_path = get_rcnn_prefix(img_id)
-        img_info = json.load(open(output_path))
-        
+        img_info = self.imgid2img[img_id]
         obj_num = img_info['num_boxes']
-        boxes = np.array(img_info['boxes'])#.copy()
-        feats = np.array(img_info['features'])#.copy()
+        boxes = img_info['boxes'].copy()
+        feats = img_info['features'].copy()
         assert len(boxes) == len(feats) == obj_num
-
-#         obj_num = img_info['num_boxes']
-#         boxes = img_info['boxes'].copy()
-#         feats = img_info['features'].copy()
-#         assert len(boxes) == len(feats) == obj_num
 
         # Normalize the boxes (to 0 ~ 1)
         img_h, img_w = img_info['img_h'], img_info['img_w']
@@ -170,6 +187,17 @@ class GQATorchDataset(Dataset):
         boxes[:, (1, 3)] /= img_h
         np.testing.assert_array_less(boxes, 1+1e-5)
         np.testing.assert_array_less(-boxes, 0+1e-5)
+        
+        spatial_datum = self.imgid2spa.get(str(img_id),None)
+#         spatial_datum = None
+        if spatial_datum is None:
+            x = (boxes[:,(0)]+boxes[:,(2)])/2
+            y = (boxes[:,(1)]+boxes[:,(3)])/2
+            z =  np.zeros(36)
+            cords = [ (a,b,c) for a,b,c in zip(x,y,z)]
+            spatial_labels = create_spatial(cords)[0] #0: diffs, 1: labels
+        else:
+            spatial_labels = create_spatial(spatial_datum['3Dcoords_camera'])[0] #0: diffs, 1: labels
 
         # Create target
         if 'label' in datum:
@@ -178,9 +206,9 @@ class GQATorchDataset(Dataset):
             for ans, score in label.items():
                 if ans in self.raw_dataset.ans2label:
                     target[self.raw_dataset.ans2label[ans]] = score
-            return ques_id, torch.tensor(feats).float(), torch.tensor(boxes).float(), ques, target
+            return ques_id, feats, boxes, ques, target, torch.tensor(spatial_labels)
         else:
-            return ques_id, torch.tensor(feats).float(), torch.tensor(boxes).float(), ques
+            return ques_id, feats, boxes, ques
 
 
 class GQAEvaluator:

@@ -7,11 +7,17 @@ mkdir -p  $output/src
 cp -r src/*  $output/src/
 cp $0  $output/run.bash
 
+export MASTER_PORT=$((12000 + RANDOM % 20000))
+
+IFS=','
+read -a strarr <<< "$1"
+echo "Number of GPUs ${#strarr[*]}"
+
 # See Readme.md for option details.
 CUDA_VISIBLE_DEVICES=$1 PYTHONPATH=$PYTHONPATH:./src \
-    python src/tasks/gqa.py \
-    --train others --valid testdev_others \
+    python -m torch.distributed.launch --nproc_per_node=${#strarr[*]} --master_port=$MASTER_PORT src/tasks/gqa_wsup_bins_patches.py \
+    --train train,valid --valid testdev \
     --llayers 9 --xlayers 5 --rlayers 5 \
     --loadLXMERT  /data/data/lxmert_data/snap/pretrained/model \
-    --batchSize 64 --optim bert --lr 1e-5 --epochs 20 \
+    --batchSize 16 --optim bert --epochs 20 \
     --tqdm --output $output ${@:3}
